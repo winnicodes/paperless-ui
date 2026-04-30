@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install *)",
+      "Bash(xargs ls *)",
+      "Bash(awk '{print $NF}')",
+      "Bash(xargs wc *)",
+      "Bash(npm uninstall *)",
+      "Bash(grep -E \"\\\\.\\(json|tsx?|xml\\)$\")",
+      "Bash(npm run *)",
+      "Bash(unzip -o WinniStyle.zip -d WinniStyle_extracted)",
+      "Bash(npx tsc *)"
+    ]
+  }
+}

@@ -1,0 +1,153 @@
+/* ============================================================
+   LOGIN — Zentrierte Card, analog graembl LoginScreen
+   ============================================================ */
+
+.login-demo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100dvh - 3.25rem);
+  /* Negativer Margin hebt das padding von .main-content auf */
+  margin: calc(-1 * var(--space-8));
+  padding: var(--space-6);
+}
+
+.login-panel {
+  width: 100%;
+  max-width: 28rem;
+  padding: var(--space-8);
+}
+
+@media (max-width: 640px) {
+  .login-panel { padding: var(--space-6); }
+}
+
+/* Brand block */
+.login-brand-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: center;
+}
+
+/* Double-ring emblem */
+.login-brand-emblem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--space-20) + var(--space-2));
+  height: calc(var(--space-20) + var(--space-2));
+  border-radius: 999px;
+  border: 1px solid rgb(var(--np-brand) / 0.28);
+  background: rgb(var(--np-header) / 0.84);
+}
+
+.login-brand-emblem-ring {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-16);
+  height: var(--space-16);
+  border-radius: 999px;
+  border: 1px solid rgb(var(--np-brand) / 0.42);
+  background: rgb(var(--np-background) / 0.46);
+}
+
+.login-brand-emblem-icon {
+  width: calc(var(--space-8) + var(--space-2));
+  height: calc(var(--space-8) + var(--space-2));
+  color: rgb(var(--np-brand));
+  stroke-width: 1.5;
+}
+
+/* Brand copy */
+.login-brand-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.login-brand-wordmark {
+  font-family: 'Pacifico', cursive;
+  font-size: var(--ds-font-size-3xl);
+  font-weight: 400;
+  color: rgb(var(--np-text-main));
+}
+
+.login-brand-subline {
+  color: rgb(var(--np-brand-dark));
+  font-size: var(--ds-font-size-sm);
+  font-weight: var(--ds-weight-semibold);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+/* Form */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin-top: var(--space-8);
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.login-field-label {
+  display: block;
+  color: rgb(var(--np-text-muted));
+  font-size: var(--ds-font-size-xs);
+  font-weight: var(--ds-weight-bold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* Taller input, wie in graembl */
+.login-input {
+  height: calc(var(--ds-control-height-lg) + var(--space-1));
+  font-size: var(--ds-font-size-md);
+}
+
+.login-input-group .input-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Error */
+.login-error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: rgb(var(--np-danger));
+  font-size: var(--ds-font-size-xs);
+  font-weight: var(--ds-weight-medium);
+}
+
+/* Submit */
+.login-submit {
+  width: 100%;
+  height: calc(var(--ds-control-height-lg) + var(--space-1));
+  font-size: var(--ds-font-size-md);
+  margin-top: var(--space-2);
+}
+
+/* Footer */
+.login-footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-8);
+  text-align: center;
+}
+
+.login-footer-line {
+  margin: 0;
+  color: rgb(var(--np-text-muted));
+  font-size: var(--ds-font-size-xs);
+}

@@ -1,0 +1,6 @@
+{
+  "name": "WinniPaper Dashboard",
+  "description": "A polished Paperless NGX dashboard with timeline views and tag-based browsing using the WinniStyle design system.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["Document Management", "Timeline Visualization"]
+}
