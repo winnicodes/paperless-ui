@@ -1,7 +1,7 @@
 # paperless-ui – Paperless NGX Dashboard
 
 A polished dashboard for [Paperless NGX](https://docs.paperless-ngx.com/) with timeline views and tag-based browsing.
-
+Imports everything from paperless-ngx
 ## Run Locally
 
 **Prerequisites:** Node.js
