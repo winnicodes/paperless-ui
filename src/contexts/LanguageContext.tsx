@@ -13,8 +13,19 @@ const LanguageContext = createContext<Ctx>({
   t: translations.de,
 });
 
+const LANG_KEY = 'paperless_lang';
+
 export const LanguageProvider = ({ children }: { children: ReactNode }) => {
-  const [lang, setLang] = useState<Lang>('de');
+  const [lang, setLangState] = useState<Lang>(() => {
+    const saved = localStorage.getItem(LANG_KEY);
+    return saved === 'en' ? 'en' : 'de';
+  });
+
+  const setLang = (l: Lang) => {
+    setLangState(l);
+    localStorage.setItem(LANG_KEY, l);
+  };
+
   return (
     <LanguageContext.Provider value={{ lang, setLang, t: translations[lang] }}>
       {children}

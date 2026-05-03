@@ -10,12 +10,14 @@ interface TimelineProps {
   documents: Document[];
   tags: Tag[];
   onClickDoc: (doc: Document) => void;
+  darkMode: boolean;
+  onRename?: (id: number, newTitle: string) => Promise<void>;
 }
 
 const SPINE_CENTER = 10; // px from container left edge to spine center
 const CONTAINER_INDENT = 36; // px of padding-left on the container
 
-const Timeline: React.FC<TimelineProps> = ({ documents, tags, onClickDoc }) => {
+const Timeline: React.FC<TimelineProps> = ({ documents, tags, onClickDoc, darkMode, onRename }) => {
   const { t } = useLang();
 
   const groups = useMemo(() => {
@@ -92,7 +94,8 @@ const Timeline: React.FC<TimelineProps> = ({ documents, tags, onClickDoc }) => {
               style={{
                 position: 'absolute',
                 left: `${SPINE_CENTER - CONTAINER_INDENT - 7}px`,
-                top: '0.3rem',
+                top: '0.5rem',
+                transform: 'translateY(-50%)',
                 width: '0.875rem',
                 height: '0.875rem',
                 borderRadius: '50%',
@@ -109,8 +112,6 @@ const Timeline: React.FC<TimelineProps> = ({ documents, tags, onClickDoc }) => {
                 alignItems: 'baseline',
                 gap: 'var(--space-2)',
                 marginBottom: 'var(--space-5)',
-                paddingBottom: 'var(--space-3)',
-                borderBottom: '1px solid rgb(var(--np-border) / 0.4)',
               }}
             >
               <span
@@ -138,13 +139,15 @@ const Timeline: React.FC<TimelineProps> = ({ documents, tags, onClickDoc }) => {
             </div>
 
             {/* Document cards — full width */}
-            <div className="grid grid-3">
+            <div className="grid grid-auto">
               {docs.map(doc => (
                 <DocumentCard
                   key={doc.id}
                   doc={doc}
                   tags={tags}
                   onClick={() => onClickDoc(doc)}
+                  darkMode={darkMode}
+                  onRename={onRename}
                 />
               ))}
             </div>

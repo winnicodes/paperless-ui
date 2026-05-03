@@ -1,7 +1,10 @@
-import React from 'react';
-import { Search, Tag as TagIcon, Check, X, FilterX } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, Tag as TagIcon, Check, X, FilterX, ChevronDown, ChevronUp } from 'lucide-react';
 import { type Tag } from '../services/paperless';
 import { useLang } from '../contexts/LanguageContext';
+import { contrastText, adaptiveTagColor } from '../lib/tagColor';
+
+const VISIBLE_COUNT = 8;
 
 export interface FilterBarProps {
   tags: Tag[];
@@ -10,6 +13,7 @@ export interface FilterBarProps {
   onClearFilters: () => void;
   searchQuery: string;
   onSearchChange: (q: string) => void;
+  darkMode: boolean;
 }
 
 const FilterBar: React.FC<FilterBarProps> = ({
@@ -19,9 +23,19 @@ const FilterBar: React.FC<FilterBarProps> = ({
   onClearFilters,
   searchQuery,
   onSearchChange,
+  darkMode,
 }) => {
   const { t } = useLang();
+  const [expanded, setExpanded] = useState(false);
   const hasFilters = selectedTags.length > 0 || searchQuery.trim() !== '';
+
+  const hiddenCount = Math.max(0, tags.length - VISIBLE_COUNT);
+  // Auto-expand if any selected tag is in the hidden slice
+  const hasHiddenActive = selectedTags.some(id =>
+    tags.slice(VISIBLE_COUNT).some(tag => tag.id === id)
+  );
+  const showAll = expanded || hasHiddenActive;
+  const visibleTags = showAll ? tags : tags.slice(0, VISIBLE_COUNT);
 
   return (
     <div className="card">
@@ -58,7 +72,7 @@ const FilterBar: React.FC<FilterBarProps> = ({
             {t.statTags}
           </span>
 
-          {tags.map(tag => {
+          {visibleTags.map(tag => {
             const active = selectedTags.includes(tag.id);
             return (
               <button
@@ -67,8 +81,8 @@ const FilterBar: React.FC<FilterBarProps> = ({
                 className="badge cursor-pointer text-xs transition-all"
                 style={{
                   backgroundColor: active ? tag.color : `${tag.color}18`,
-                  color: active ? '#fff' : tag.color,
-                  borderColor: active ? 'transparent' : `${tag.color}40`,
+                  color: active ? contrastText(tag.color) : adaptiveTagColor(tag.color, darkMode),
+                  borderColor: active ? 'transparent' : `${tag.color}55`,
                   outline: active ? `2px solid ${tag.color}` : 'none',
                   outlineOffset: '2px',
                   display: 'inline-flex',
@@ -82,6 +96,27 @@ const FilterBar: React.FC<FilterBarProps> = ({
               </button>
             );
           })}
+
+          {hiddenCount > 0 && (
+            <button
+              onClick={() => setExpanded(v => !v)}
+              className="badge cursor-pointer text-xs transition-all"
+              style={{
+                backgroundColor: 'rgb(var(--np-border) / 0.3)',
+                color: 'rgb(var(--np-text-muted))',
+                border: '1px dashed rgb(var(--np-border))',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                padding: '0.2em 0.7em',
+              }}
+            >
+              {showAll
+                ? <><ChevronUp size={10} />{t.showLessTags}</>
+                : <><ChevronDown size={10} />{t.showMoreTags(hiddenCount)}</>
+              }
+            </button>
+          )}
 
           {hasFilters && (
             <button

@@ -1,26 +1,64 @@
 import express from "express";
-import { createServer as createViteServer } from "vite";
 import path from "path";
+import { readFileSync } from "fs";
 import axios from "axios";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 const PORT = 3000;
-const PAPERLESS_URL = process.env.VITE_PAPERLESS_URL?.replace(/\/$/, "");
-const PAPERLESS_TOKEN = process.env.PAPERLESS_API_TOKEN;
+const rawPaperlessUrl = process.env.VITE_PAPERLESS_URL?.replace(/\/$/, "") ?? "";
+const PAPERLESS_URL = rawPaperlessUrl && !rawPaperlessUrl.startsWith("http")
+  ? `http://${rawPaperlessUrl}`
+  : rawPaperlessUrl || undefined;
+const PAPERLESS_TOKEN_ENV = process.env.PAPERLESS_API_TOKEN;
+
+let APP_VERSION = "0.0.0";
+try {
+  const pkg = JSON.parse(readFileSync(path.join(process.cwd(), "package.json"), "utf-8"));
+  APP_VERSION = pkg.version;
+} catch { /* ignore */ }
 
 async function startServer() {
   const app = express();
   app.use(express.json());
 
-  // API Proxy Middleware
+  // ── App config (frontend reads version + URL) ───────────────────────────
+  app.get("/api/config", (_req, res) => {
+    res.json({ paperlessUrl: PAPERLESS_URL ?? null, version: APP_VERSION });
+  });
+
+  // ── Auth: login → Paperless token endpoint ──────────────────────────────
+  app.post("/api/auth/login", async (req, res) => {
+    if (!PAPERLESS_URL) {
+      return res.status(500).json({ error: "Paperless URL not configured" });
+    }
+    const { username, password } = req.body ?? {};
+    if (!username || !password) {
+      return res.status(400).json({ error: "Benutzername und Passwort erforderlich" });
+    }
+    try {
+      const response = await axios.post(`${PAPERLESS_URL}/api/token/`, { username, password });
+      res.json({ token: response.data.token });
+    } catch (error: any) {
+      const status = error.response?.status ?? 401;
+      res.status(status).json({ error: "Ungültige Anmeldedaten" });
+    }
+  });
+
+  // ── Paperless API proxy ──────────────────────────────────────────────────
   app.all("/api/paperless/*", async (req, res) => {
-    if (!PAPERLESS_URL || !PAPERLESS_TOKEN) {
-      return res.status(500).json({ error: "Paperless configuration missing" });
+    if (!PAPERLESS_URL) {
+      return res.status(500).json({ error: "Paperless URL not configured" });
     }
 
-    const endpoint = req.params[0];
+    // Token from client login takes precedence over env token
+    const token = String(req.headers["x-auth-token"] || "") || PAPERLESS_TOKEN_ENV;
+    if (!token) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+
+    const endpoint = (req.params as Record<string, string>)[0];
     const targetUrl = `${PAPERLESS_URL}/api/${endpoint}`;
 
     try {
@@ -29,7 +67,7 @@ async function startServer() {
         method: req.method,
         url: targetUrl,
         headers: {
-          Authorization: `Token ${PAPERLESS_TOKEN}`,
+          Authorization: `Token ${token}`,
           "Content-Type": String(req.headers["content-type"] || "application/json"),
         },
         params: req.query,
@@ -50,26 +88,27 @@ async function startServer() {
     }
   });
 
-  // Proxy for non-api endpoints if needed (e.g., viewing documents)
+  // ── Document download helper ─────────────────────────────────────────────
   app.get("/fetch-doc/:id", async (req, res) => {
-     if (!PAPERLESS_URL || !PAPERLESS_TOKEN) return res.status(500).send("Config missing");
-     const id = req.params.id;
-     try {
-       const response = await axios({
-         method: 'get',
-         url: `${PAPERLESS_URL}/api/documents/${id}/download/`,
-         headers: { Authorization: `Token ${PAPERLESS_TOKEN}` },
-         responseType: 'stream'
-       });
-       res.setHeader('Content-Type', 'application/pdf');
-       response.data.pipe(res);
-     } catch (e) {
-       res.status(404).send("Document not found");
-     }
+    const token = String(req.headers["x-auth-token"] || "") || PAPERLESS_TOKEN_ENV;
+    if (!PAPERLESS_URL || !token) return res.status(500).send("Config missing");
+    try {
+      const response = await axios({
+        method: "get",
+        url: `${PAPERLESS_URL}/api/documents/${req.params.id}/download/`,
+        headers: { Authorization: `Token ${token}` },
+        responseType: "stream",
+      });
+      res.setHeader("Content-Type", "application/pdf");
+      response.data.pipe(res);
+    } catch {
+      res.status(404).send("Document not found");
+    }
   });
 
-  // Vite integration
+  // ── Vite / static serving ────────────────────────────────────────────────
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",

@@ -30,6 +30,29 @@ export interface T {
   close: string;
   noPreview: string;
   timelineEmpty: string;
+  showMoreTags: (n: number) => string;
+  showLessTags: string;
+  colDocument: string;
+  colDate: string;
+  colTags: string;
+  donate: string;
+  logout: string;
+  switchLangLabel: string;
+  settings: string;
+  settingsServer: string;
+  settingsPaperlessUrl: string;
+  settingsConnection: string;
+  settingsTest: string;
+  settingsConnected: string;
+  settingsDisconnected: string;
+  settingsNotConfigured: string;
+  settingsInterface: string;
+  settingsLanguage: string;
+  settingsTheme: string;
+  settingsAbout: string;
+  settingsVersion: string;
+  settingsGitHub: string;
+  renameDoc: string;
   dateFormat: string;
   dateLocale: Locale;
 }
@@ -62,6 +85,29 @@ export const translations: Record<Lang, T> = {
     close: 'Schließen',
     noPreview: 'Keine Vorschau verfügbar',
     timelineEmpty: 'Keine Dokumente für die gewählten Filter.',
+    showMoreTags: (n) => `+ ${n} weitere`,
+    showLessTags: 'Weniger',
+    colDocument: 'Dokument',
+    colDate: 'Datum',
+    colTags: 'Tags',
+    donate: 'Spenden',
+    logout: 'Abmelden',
+    switchLangLabel: 'English',
+    settings: 'Einstellungen',
+    settingsServer: 'Server',
+    settingsPaperlessUrl: 'Paperless URL',
+    settingsConnection: 'Verbindung',
+    settingsTest: 'Testen',
+    settingsConnected: 'Verbunden',
+    settingsDisconnected: 'Keine Verbindung',
+    settingsNotConfigured: 'Nicht konfiguriert',
+    settingsInterface: 'Darstellung',
+    settingsLanguage: 'Sprache',
+    settingsTheme: 'Erscheinungsbild',
+    settingsAbout: 'Über paperless-ui',
+    settingsVersion: 'Version',
+    settingsGitHub: 'Quellcode auf GitHub',
+    renameDoc: 'Umbenennen',
     dateFormat: 'dd. MMM yyyy',
     dateLocale: deLocale,
   },
@@ -92,6 +138,29 @@ export const translations: Record<Lang, T> = {
     close: 'Close',
     noPreview: 'No preview available',
     timelineEmpty: 'No documents for the selected filters.',
+    showMoreTags: (n) => `+ ${n} more`,
+    showLessTags: 'Less',
+    colDocument: 'Document',
+    colDate: 'Date',
+    colTags: 'Tags',
+    donate: 'Donate',
+    logout: 'Logout',
+    switchLangLabel: 'German',
+    settings: 'Settings',
+    settingsServer: 'Server',
+    settingsPaperlessUrl: 'Paperless URL',
+    settingsConnection: 'Connection',
+    settingsTest: 'Test',
+    settingsConnected: 'Connected',
+    settingsDisconnected: 'Not connected',
+    settingsNotConfigured: 'Not configured',
+    settingsInterface: 'Appearance',
+    settingsLanguage: 'Language',
+    settingsTheme: 'Theme',
+    settingsAbout: 'About paperless-ui',
+    settingsVersion: 'Version',
+    settingsGitHub: 'Source code on GitHub',
+    renameDoc: 'Rename',
     dateFormat: 'MMM dd, yyyy',
     dateLocale: enUS,
   },

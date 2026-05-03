@@ -1,5 +1,24 @@
 import axios from 'axios';
 
+const TOKEN_KEY = 'paperless_token';
+
+// Attach stored token to every outgoing request
+axios.interceptors.request.use(config => {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (token) config.headers['x-auth-token'] = token;
+  return config;
+});
+
+export const auth = {
+  login: async (username: string, password: string): Promise<string> => {
+    const res = await axios.post('/api/auth/login', { username, password });
+    localStorage.setItem(TOKEN_KEY, res.data.token);
+    return res.data.token;
+  },
+  logout: () => localStorage.removeItem(TOKEN_KEY),
+  getToken: (): string | null => localStorage.getItem(TOKEN_KEY),
+};
+
 export interface Document {
   id: number;
   title: string;
@@ -34,80 +53,6 @@ export interface DocumentType {
   name: string;
 }
 
-const MOCK_TAGS = [
-  { id: 1, name: "Finanzen", color: "#eab308", document_count: 5 },
-  { id: 2, name: "Wichtig", color: "#ef4444", document_count: 3 },
-  { id: 3, name: "Auto", color: "#3b82f6", document_count: 2 },
-  { id: 4, name: "Privat", color: "#10b981", document_count: 4 },
-];
-
-const MOCK_DOCS = [
-  {
-    id: 1,
-    title: "Telekom Rechnung März 2024",
-    content: "Rechnungsbetrag: 45,90€",
-    created: "2024-03-15T10:00:00Z",
-    added: "2024-03-15T10:00:00Z",
-    modified: "2024-03-15T10:00:00Z",
-    tags: [1, 2],
-    correspondent: 1,
-    document_type: 1,
-    storage_path: null,
-    thumbnail_url: "/test-pdfpdf.pdf"
-  },
-  {
-    id: 2,
-    title: "Mietvertrag Wohnung am Park",
-    content: "Mietbeginn: 01.01.2024",
-    created: "2023-12-10T14:30:00Z",
-    added: "2023-12-10T14:30:00Z",
-    modified: "2023-12-10T14:30:00Z",
-    tags: [2, 4],
-    correspondent: 2,
-    document_type: 2,
-    storage_path: null,
-    thumbnail_url: "/test-pdfpdf.pdf"
-  },
-  {
-    id: 3,
-    title: "KFZ Versicherung 2024",
-    content: "Versicherungsschein Nummer: 12345678",
-    created: "2024-01-05T09:15:00Z",
-    added: "2024-01-05T09:15:00Z",
-    modified: "2024-01-05T09:15:00Z",
-    tags: [3],
-    correspondent: 3,
-    document_type: 1,
-    storage_path: null,
-    thumbnail_url: "/test-pdfpdf.pdf"
-  },
-  {
-    id: 4,
-    title: "Gehaltsabrechnung Februar 2024",
-    content: "Nettoverdienst: 2850,00€",
-    created: "2024-02-28T16:00:00Z",
-    added: "2024-02-28T16:00:00Z",
-    modified: "2024-02-28T16:00:00Z",
-    tags: [1, 4],
-    correspondent: 4,
-    document_type: 3,
-    storage_path: null,
-    thumbnail_url: "/test-pdfpdf.pdf"
-  },
-  {
-    id: 5,
-    title: "Amazon Bestellung - Gaming Maus",
-    content: "Bestellbestätigung",
-    created: "2024-04-12T11:20:00Z",
-    added: "2024-04-12T11:20:00Z",
-    modified: "2024-04-12T11:20:00Z",
-    tags: [4],
-    correspondent: 5,
-    document_type: 1,
-    storage_path: null,
-    thumbnail_url: "/test-pdfpdf.pdf"
-  }
-];
 
 // Paperless NGX legacy integer colour index → hex
 const PAPERLESS_COLOUR_MAP: Record<number, string> = {
@@ -122,61 +67,45 @@ function resolveColour(raw: unknown): string {
   return '#6b7280';
 }
 
+export interface DocumentsParams {
+  page?: number;
+  page_size?: number;
+  search?: string;
+  tags__id__in?: string;
+}
+
 export const paperlessApi = {
-  getDocuments: async (params: any = {}) => {
-    try {
-      const allDocs: any[] = [];
-      let page = 1;
-      while (true) {
-        const res = await axios.get('/api/paperless/documents/', {
-          params: { ...params, page, page_size: 100 },
-        });
-        allDocs.push(...res.data.results);
-        if (!res.data.next) break;
-        page++;
-      }
-      const results = allDocs.map((doc: any) => ({
-        ...doc,
-        thumbnail_url: `/api/paperless/documents/${doc.id}/thumb/`,
-        download_url:  `/api/paperless/documents/${doc.id}/download/`,
-      }));
-      return { results, count: results.length };
-    } catch (e) {
-      console.warn("Using mock documents fallback");
-      return { results: MOCK_DOCS, count: MOCK_DOCS.length };
-    }
+  getDocuments: async (params: DocumentsParams = {}) => {
+    const res = await axios.get('/api/paperless/documents/', {
+      params: { page_size: 10, page: 1, ...params },
+    });
+    const results = res.data.results.map((doc: any) => ({
+      ...doc,
+      thumbnail_url: `/api/paperless/documents/${doc.id}/thumb/`,
+      download_url:  `/api/paperless/documents/${doc.id}/download/`,
+    }));
+    return { results, count: res.data.count as number, hasMore: !!res.data.next };
   },
 
   getTags: async () => {
-    try {
-      const allTags: any[] = [];
-      let page = 1;
-      while (true) {
-        const res = await axios.get('/api/paperless/tags/', {
-          params: { page, page_size: 100 },
-        });
-        console.log(`[tags] page ${page} raw response:`, res.data);
-        allTags.push(...res.data.results);
-        if (!res.data.next) break;
-        page++;
-      }
-      console.log(`[tags] total fetched: ${allTags.length}`, allTags);
-      if (allTags.length === 0) {
-        console.warn('[tags] No tags returned from Paperless — using mock fallback. Create tags in your Paperless instance to see real data.');
-        return { results: MOCK_TAGS, count: MOCK_TAGS.length };
-      }
-      const results = allTags.map((tag: any) => ({
-        id:             tag.id,
-        name:           tag.name,
-        color:          resolveColour(tag.colour ?? tag.color),
-        is_inbox_tag:   tag.is_inbox_tag,
-        document_count: tag.document_count,
-      }));
-      return { results, count: results.length };
-    } catch (e) {
-      console.warn("Using mock tags fallback", e);
-      return { results: MOCK_TAGS, count: MOCK_TAGS.length };
+    const allTags: any[] = [];
+    let page = 1;
+    while (true) {
+      const res = await axios.get('/api/paperless/tags/', {
+        params: { page, page_size: 100 },
+      });
+      allTags.push(...res.data.results);
+      if (!res.data.next) break;
+      page++;
     }
+    const results = allTags.map((tag: any) => ({
+      id:             tag.id,
+      name:           tag.name,
+      color:          resolveColour(tag.colour ?? tag.color),
+      is_inbox_tag:   tag.is_inbox_tag,
+      document_count: tag.document_count,
+    }));
+    return { results, count: results.length };
   },
   
   getCorrespondents: async () => {
@@ -189,6 +118,11 @@ export const paperlessApi = {
     return res.data;
   },
   
+  patchDocument: async (id: number, data: { title?: string }) => {
+    const res = await axios.patch(`/api/paperless/documents/${id}/`, data);
+    return res.data;
+  },
+
   uploadDocument: async (file: File) => {
     const formData = new FormData();
     formData.append('document', file);
